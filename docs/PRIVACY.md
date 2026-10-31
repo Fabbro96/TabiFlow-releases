@@ -154,46 +154,35 @@ plausible, and without that notice a misconfigured backend would be
 indistinguishable from a model that simply took a while. If you see that
 notice, the route you are looking at was not produced or ordered by the model.
 
-### 5.1 Specific warning for the web version
+### 5.1 Retained Gemini API key fallback
 
-This warning is about the **retained Gemini API key fallback**, which still
-exists and is still stored on the web client. It is not softened because the
-primary path no longer needs the key: the fallback is real, and a key you have
-saved is exposed the same way it always was.
+This section is about the **retained Gemini API key fallback**, which still
+exists. It is not softened because the primary path no longer needs the key: the
+fallback is real, and a key you have saved is stored on the device.
 
-On the **web** version, the browser's local storage has no hardware-backed
-protection. The key and its decryption material sit in browser storage, where
-**any script running on the same origin can read them**. The Content-Security-Policy
-shipped with the app is the control that limits this, and it is strict — but it
-is a mitigation, not a guarantee.
-
-**Therefore: on web, if you save a Gemini API key at all, use one restricted to
-the Gemini API, with a usage quota you are willing to lose.** On Android the key
-is stored in hardware-backed encrypted storage and this warning does not apply.
+On Android the key is stored in hardware-backed encrypted storage. If you save a
+Gemini API key at all, use one restricted to the Gemini API, with a usage quota you are willing to lose.
 
 #### 5.1.1 The assistant runs on Firebase AI Logic, and the key is a retained fallback
 
 The app's primary AI backend is **Firebase AI Logic** (`firebase_ai`), which
 authenticates with your Firebase account and Firebase App Check. On that path
-there is **no API key stored on the device at all** — nothing to leak from
-`localStorage`, and no key for a same-origin script to read.
+there is **no API key stored on the device at all**.
 
 The Gemini API key field in **Settings** has been kept as an explicit fallback,
-and it is still stored where §5.1 describes, so **the exposure described above
-is reduced but not eliminated**. It is not eliminated for two separate reasons:
-
-1. The key is still stored on the web client, where `flutter_secure_storage`
-   encryption is cosmetic, as §5.1 says.
-2. We have **not verified** that Firebase AI Logic is enabled and App Check is
-   enforced for this project. Deleting the only AI path on the strength of a
-   console setting we cannot see from the build would risk shipping a dead
-   feature, which is a worse outcome than the exposure we are reducing.
+and it is still stored on the device as §5.1 describes, so **the exposure is
+reduced but not eliminated**. It is not eliminated because we have **not
+verified**
+that Firebase AI Logic is enabled and App Check is enforced for this project.
+Deleting the only AI path on the strength of a console setting we cannot see
+from the build would risk shipping a dead feature, which is a worse outcome than
+the exposure we are reducing.
 
 The key therefore no longer enables the assistant: it is stored, and the
 Settings field says so. It will be removed once AI Logic and App Check are
 confirmed working in production; the code and `docs/PRIVACY.md` both mark that
-as the gate. On Android the exposure was already limited by hardware-backed
-storage, and it will be removed on the same schedule.
+as the gate. On Android the exposure is limited by hardware-backed
+storage.
 
 What this means for your data: **prompts are still sent to Google**, now through
 Firebase AI Logic, with the same trip context described in §5 and the same
@@ -204,12 +193,10 @@ did not.
 
 Firebase AI Logic refuses requests unless **App Check** is enforced for the
 project. The app activates App Check itself at startup — automatically on
-Android, and on web when the build was made with a web site key. A **web release
-built without `--dart-define=FIREBASE_APPCHECK_WEB_SITE_KEY=<site key>` will
-therefore make every AI request fail**, and the app will say so on screen rather
-than quietly falling back.
+Android. If activation fails, every AI request fails, and the app says so on
+screen rather than quietly falling back.
 
-App Check itself collects a small amount of device or browser attestation
+App Check itself collects a small amount of device attestation
 signal, handled by Google under its own terms. It is what makes the AI path
 usable without an API key, so it is part of the AI path and not of the
 on-device heuristic.
