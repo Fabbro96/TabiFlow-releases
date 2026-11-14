@@ -47,11 +47,18 @@ Only what the app needs to show you your own itinerary.
 | Category | Concrete fields |
 |---|---|
 | Account | Firebase authentication identifier, display name, email address, profile photo URL — supplied by Google when you sign in, and visible to you in Settings |
-| Trips | Title, destination, start and end date, day count, currency code and symbol, exchange rate to euro, dietary notes, per-trip visibility setting |
+| Trips | Title, destination, start and end date, day count, time zone, travel mode (public transport or car), currency code and symbol, exchange rate to euro, dietary notes, notes, per-trip visibility setting |
 | Days and stops | Day number and date, stop title, description, time slot, estimated cost, category, geographic coordinates, visit/booking flags, an optional Google Maps link you type yourself |
+| To-dos and lodging | To-do title, notes, kind, due date, linked day and link; for each day, the name, address, coordinates, link and notes of where you sleep that night |
 | Collaborators | The email addresses you invite, and their role (owner, editor, viewer) |
 | AI chat | Your messages and the assistant's replies, held in memory for the current session; not persisted to the cloud |
 | Device cache | The above trip data plus cached weather, exchange rates and currency metadata, kept in app-private storage so the app works offline |
+
+**Reminders stay on the device.** If you allow notifications, the app
+schedules a local reminder one hour before each open to-do's due date. The
+schedule lives only on your phone and nothing about it is sent anywhere; the
+operating system shows the to-do title in the notification, and so possibly on
+the lock screen. You can turn reminders off in Settings at any time.
 
 **Special categories of data.** The app has no field for health, religion,
 ethnicity, biometrics or political opinion. `dietary notes` is free text you
@@ -83,7 +90,9 @@ described in §5 and happens only if you gave the app a key.
 
 | Service | What is sent | When |
 |---|---|---|
-| `tile.openstreetmap.org` (OpenStreetMap Foundation, volunteers) | The map tile coordinates you are viewing — that is, the geographic area of the trip you are looking at — with a `User-Agent` identifying this app and its public repository | Only while a trip map is open |
+| `tile.openstreetmap.org` (OpenStreetMap Foundation, volunteers) | The map tile coordinates you are viewing — that is, the geographic area of the trip you are looking at — with a `User-Agent` identifying this app and its public repository. Tiles you have viewed are kept in the app's cache folder on the device (refreshed after 7 days, at most 200 MB, clearable in Settings) so maps work offline | Only while a trip map is open, for tiles not already saved or older than 7 days |
+| `routing.openstreetmap.de` (FOSSGIS e.V., OSRM) | The coordinates of two consecutive stops (or a stop and the night's lodging), to compute the real driving or walking time between them, with a `User-Agent` identifying this app. Results are cached on the device for 30 days | While a trip is open: the app fetches the legs of every day of that trip in the background (at most one request per second), so the times are available offline. Only car or walking legs |
+| `nominatim.openstreetmap.org` (OpenStreetMap Foundation) | The name of a stop or lodging plus the trip's destination (e.g. "Kapuzinergarten, Lana"), to find its coordinates, with a `User-Agent` identifying this app | Only when you save a stop or lodging without coordinates |
 | `api.open-meteo.com` (Open-Meteo) | The latitude and longitude of your stops, to retrieve weather | Only when you open a view that shows weather |
 | `api.frankfurter.dev`, or `open.er-api.com` if the first one fails | A single hard-coded query for euro-based rates (`?base=EUR`). No trip data, no identifier, and nothing that identifies you | Only when a trip's exchange rate is set or refreshed |
 | `generativelanguage.googleapis.com` (Google) | Your AI question plus the trip context described in §5 — and only if you supplied an API key | Only when you use the AI assistant |
